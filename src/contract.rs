@@ -1,9 +1,9 @@
+use crate::contract::query::get_price;
 use crate::error::ContractError;
 use crate::msg::{AdminsListResp, ExecuteMsg, GreetResp, InstantiateMsg, QueryMsg};
 use crate::state::ADMINS;
 use cosmwasm_std::{
-    to_json_binary, Binary, Deps, DepsMut, Env, Event, MessageInfo, QueryRequest, Response,
-    StdResult,
+    to_json_binary, Binary, Deps, DepsMut, Env, Event, MessageInfo, Response, StdResult,
 };
 
 pub fn instantiate(
@@ -26,8 +26,9 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     use QueryMsg::*;
 
     match msg {
-        Greet {} => to_json_binary(&query::greet(deps)?),
+        Greet {} => to_json_binary(&query::greet()?),
         AdminsList {} => to_json_binary(&query::admins_list(deps)?),
+        GetPrice { pair } => to_json_binary(&get_price(deps, pair)?),
     }
 }
 
@@ -94,13 +95,15 @@ mod exec {
 
 mod query {
 
-    use super::*;
-    use crate::msg::{OracleQueryMsg, QueryPriceResponse};
+    use nibiru_std::proto::{nibiru::oracle::QueryExchangeRateRequest, NibiruStargateQuery};
 
-    pub fn greet(deps: Deps) -> StdResult<GreetResp> {
+    use crate::msg::{GetPriceResp, QueryPriceResponse};
+
+    use super::*;
+
+    pub fn greet() -> StdResult<GreetResp> {
         let resp = GreetResp {
             message: "Hello World".to_owned(),
-            price: query_price(deps)?,
         };
 
         Ok(resp)
@@ -112,18 +115,18 @@ mod query {
         Ok(resp)
     }
 
-    fn query_price(deps: Deps) -> StdResult<QueryPriceResponse> {
-        const PRICE_FEEDER_CONTRACT_ADDRESS: &str = "";
-        let query = QueryRequest::Wasm(cosmwasm_std::WasmQuery::Smart {
-            contract_addr: (String::from(PRICE_FEEDER_CONTRACT_ADDRESS)),
-            msg: to_json_binary(&OracleQueryMsg::Price {
-                pair_id: "uatom:uusd".to_owned(),
-            })?,
-        });
+    pub fn get_price(deps: Deps, pair: String) -> StdResult<GetPriceResp> {
+        let query_req: QueryExchangeRateRequest = QueryExchangeRateRequest { pair: pair.clone() };
 
-        let current_price: QueryPriceResponse = deps.querier.query(&query)?;
+        let query_stargate = query_req.into_stargate_query()?;
 
-        Ok(current_price)
+        let res: QueryPriceResponse = deps.querier.query(&query_stargate)?;
+
+        let resp = GetPriceResp {
+            exchange_rate: res.exchange_rate.to_owned(),
+        };
+
+        Ok(resp)
     }
 }
 
@@ -214,7 +217,6 @@ mod tests {
             resp,
             GreetResp {
                 message: "Hello World".to_owned(),
-                price: todo!()
             }
         );
     }

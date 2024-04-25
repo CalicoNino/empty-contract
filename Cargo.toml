@@ -11,6 +11,7 @@ cosmwasm-std = { version = "1.5.3", features = ["staking"] }
 serde = { version = "1.0.197", default-features = false, features = ["derive"] }
 cw-storage-plus = "0.16.0"
 thiserror = "1.0.58"
+nibiru-std = "0.0.3"
 
 [dev-dependencies]
 cw-multi-test = "0.20.1"

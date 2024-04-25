@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Decimal};
+use cosmwasm_std::Addr;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
@@ -9,7 +9,11 @@ pub struct InstantiateMsg {
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct GreetResp {
     pub message: String,
-    pub price: QueryPriceResponse,
+}
+
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+pub struct GetPriceResp {
+    pub exchange_rate: String,
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
@@ -21,6 +25,7 @@ pub struct AdminsListResp {
 pub enum QueryMsg {
     Greet {},
     AdminsList {},
+    GetPrice { pair: String },
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
@@ -30,20 +35,6 @@ pub enum ExecuteMsg {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
-pub enum OracleQueryMsg {
-    Price { pair_id: String },
-    Prices {},
-    RawPrices { pair_id: String },
-    Oracles {},
-    Markets {},
-}
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct QueryPriceResponse {
-    pub current_price: CurrentPrice,
-}
-
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
-pub struct CurrentPrice {
-    pub pair_id: String,
-    pub price: Decimal,
+    pub exchange_rate: String,
 }
